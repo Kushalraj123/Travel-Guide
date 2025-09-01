@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wanderly — Travel Guide</title>
+  <meta name="description" content="A sleek, responsive travel guide with search, filters, itinerary planner, and map—built using only HTML, CSS, and JavaScript." />
+  <link rel="preconnect" href="https://images.unsplash.com"/>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg-soft: #121833;
+      --card: #0e1630;
+      --text: #eaf0ff;
+      --muted: #b3c0ff;
+      --brand: #6aa9ff;
+      --brand-2:#7cf0ff;
+      --ok:#38d39f; --warn:#ffcf5c; --err:#ff7a7a;
+      --ring: 0 0 0 3px rgba(122, 240, 255, .3)
+    }
+    [data-theme="light"]{
+      --bg:#f7f9ff; --bg-soft:#eef3ff; --card:#ffffff; --text:#101320; --muted:#47507a; --brand:#2563eb; --brand-2:#06b6d4;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;}
+    body{font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto, Apple Color Emoji, Noto Color Emoji, Arial, Helvetica, "Segoe UI Emoji";
+      background:linear-gradient(120deg, var(--bg) 0%, var(--bg) 60%, var(--bg-soft) 100%);
+      color:var(--text); line-height:1.55; overflow-x:hidden}
+    a{color:inherit; text-decoration:none}
+
+    /* Layout */
+    .container{max-width:1200px; margin-inline:auto; padding: clamp(14px, 3vw, 28px)}
+    header{position:sticky; top:0; z-index:90; backdrop-filter: saturate(180%) blur(10px);
+      background: linear-gradient(180deg, rgba(10,14,30,.85), rgba(10,14,30,.45)); border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav{display:flex; align-items:center; justify-content:space-between; gap:16px}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.3px}
+    .brand .dot{width:12px; height:12px; border-radius:50%; background: radial-gradient(circle at 30% 30%, var(--brand-2), var(--brand)); box-shadow:0 0 24px var(--brand)}
+    nav ul{display:flex; gap:18px; list-style:none; padding:0; margin:0}
+    nav a{padding:10px 12px; border-radius:12px; opacity:.9}
+    nav a:hover{background:rgba(255,255,255,.06); opacity:1}
+    .actions{display:flex; align-items:center; gap:10px}
+    .btn{display:inline-flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); padding:10px 14px; border-radius:14px; color:var(--text); cursor:pointer}
+    .btn:hover{box-shadow:var(--ring)}
+    .btn.primary{border-color:transparent; background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#001122; font-weight:700}
+    .btn.ghost{border-color:transparent; background:transparent}
+    .icon{width:18px; height:18px; display:inline-block}
+    .hide-on-desktop{display:none}
+
+    /* Hero */
+    .hero{position:relative; isolation:isolate}
+    .hero::after{content:""; position:absolute; inset:0; background: radial-gradient(1200px 500px at 70% -20%, rgba(122,240,255,.15), transparent 70%), radial-gradient(800px 400px at -10% 0, rgba(106,169,255,.18), transparent 60%); z-index:-1}
+    .hero-grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:28px; align-items:center}
+    .headline{font-size: clamp(28px, 3.2vw + 8px, 56px); line-height:1.05; margin: 8px 0 18px; letter-spacing:.4px}
+    .sub{color:var(--muted); font-size: clamp(14px, 1.2vw + 8px, 18px)}
+    .search{display:grid; grid-template-columns: 1fr 160px; padding:10px; gap:10px; background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius:16px; margin:18px 0 8px}
+    .search input, .search select{appearance:none; background:#0000; border:1px solid rgba(255,255,255,.15); color:var(--text); padding:12px 14px; border-radius:12px; outline:none}
+    .search input:focus, .search select:focus{box-shadow: var(--ring); border-color: transparent}
+
+    .hero-visual{position:relative; aspect-ratio: 4/3; border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,.1)}
+    .hero-visual img{width:100%; height:100%; object-fit:cover; filter:saturate(1.15)}
+    .chiprow{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
+    .chip{padding:8px 12px; border:1px solid rgba(255,255,255,.15); border-radius:999px; font-size:13px; color:var(--muted)}
+
+    /* Sections */
+    section{padding: clamp(24px, 6vw, 72px) 0}
+    .section-title{font-size: clamp(22px, 2.2vw + 8px, 34px); margin:0 0 8px}
+    .section-sub{color:var(--muted); margin:0 0 22px}
+
+    /* Cards */
+    .grid{display:grid; grid-template-columns: repeat(12, 1fr); gap:18px}
+    .card{grid-column: span 4; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:18px; overflow:hidden; display:flex; flex-direction:column}
+    .thumb{position:relative; aspect-ratio: 16/10; overflow:hidden}
+    .thumb img{width:100%; height:100%; object-fit:cover; transition: transform .45s ease}
+    .card:hover .thumb img{transform: scale(1.06)}
+    .badge{position:absolute; top:10px; left:10px; background:rgba(0,0,0,.55); padding:6px 10px; border-radius:999px; font-size:12px}
+    .card-body{padding:14px 14px 16px; display:flex; flex-direction:column; gap:10px}
+    .title{font-weight:700}
+    .meta{color:var(--muted); font-size:14px; display:flex; gap:12px; flex-wrap:wrap}
+    .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .price{font-weight:700}
+    .pill{border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--muted)}
+    .btn-row{margin-top:auto; display:flex; gap:8px}
+    .btn.small{padding:8px 10px; border-radius:12px; font-size:14px}
+
+    /* Filters */
+    .filters{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+    .filters .pill{cursor:pointer}
+    .filters .pill.active{border-color:transparent; color:#001122; background: linear-gradient(90deg, var(--brand), var(--brand-2))}
+
+    /* Planner Drawer */
+    .drawer{position:fixed; right:18px; bottom:18px; z-index:95}
+    .drawer-panel{position:fixed; right:18px; bottom:86px; width:min(420px, 92vw); max-height:65vh; overflow:auto; padding:14px; border-radius:18px; background:var(--card); border:1px solid rgba(255,255,255,.1); display:none}
+    .drawer.open .drawer-panel{display:block}
+    .itinerary h4{margin:8px 0}
+    .itinerary .day{border:1px dashed rgba(255,255,255,.18); border-radius:12px; padding:10px; margin:10px 0}
+    .itinerary .item{display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:rgba(255,255,255,.04); border-radius:10px; margin:6px 0}
+    .itinerary .item .x{cursor:pointer}
+
+    /* Map */
+    .map-embed{position:relative; border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.1)}
+    .map-embed iframe{width:100%; height:min(60vh, 500px); border:0}
+
+    /* Accordion */
+    .accordion{border:1px solid rgba(255,255,255,.1); border-radius:16px; overflow:hidden}
+    .acc-item + .acc-item{border-top:1px solid rgba(255,255,255,.08)}
+    .acc-head{display:flex; justify-content:space-between; align-items:center; padding:14px; cursor:pointer; background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01))}
+    .acc-content{display:grid; grid-template-rows:0fr; transition:grid-template-rows .35s ease}
+    .acc-content > div{overflow:hidden}
+    .acc-item.open .acc-content{grid-template-rows:1fr}
+
+    /* Footer */
+    footer{border-top:1px solid rgba(255,255,255,.08); background: linear-gradient(0deg, rgba(0,0,0,.15), transparent)}
+
+    /* Utilities */
+    .muted{color:var(--muted)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .divider{height:1px;background:rgba(255,255,255,.08); margin:10px 0}
+    .tags{display:flex; flex-wrap:wrap; gap:8px}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      nav ul{display:none}
+      .hide-on-desktop{display:initial}
+      .hero-grid{grid-template-columns:1fr}
+      .card{grid-column: span 6}
+    }
+    @media (max-width: 640px){
+      .search{grid-template-columns:1fr}
+      .card{grid-column: span 12}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="Wanderly home">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Wanderly</span>
+      </a>
+      <nav aria-label="main">
+        <ul>
+          <li><a href="#explore">Explore</a></li>
+          <li><a href="#map">Map</a></li>
+          <li><a href="#tips">Tips</a></li>
+          <li><a href="#newsletter">Subscribe</a></li>
+        </ul>
+      </nav>
+      <div class="actions">
+        <button id="themeBtn" class="btn ghost" aria-label="Toggle theme">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3A7 7 0 0 0 21 12.79z"/></svg>
+          <span class="hide-on-mobile">Theme</span>
+        </button>
+        <button id="menuBtn" class="btn hide-on-desktop" aria-label="Open menu">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <a href="#planner" class="btn primary" id="openPlanner">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Plan Trip
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero container">
+      <div class="hero-grid">
+        <div>
+          <h1 class="headline">Your modern travel guide—find places you love, build an itinerary, and go.</h1>
+          <p class="sub">Curated destinations across the globe. Filter by vibe, budget, and season, then add picks to your personal trip plan.</p>
+          <form class="search" id="searchForm" role="search">
+            <label class="sr-only" for="q">Search destinations</label>
+            <input id="q" type="search" placeholder="Search cities, beaches, hikes…" autocomplete="off" />
+            <select id="season" aria-label="Season">
+              <option value="">Any season</option>
+              <option>Summer</option>
+              <option>Winter</option>
+              <option>Spring</option>
+              <option>Autumn</option>
+            </select>
+          </form>
+          <div class="chiprow">
+            <span class="chip">Trending: Kyoto</span>
+            <span class="chip">Budget: ₹</span>
+            <span class="chip">Vibe: Adventure</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop" alt="Mountains and lake at golden hour"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- Explore -->
+    <section id="explore" class="container">
+      <h2 class="section-title">Explore Destinations</h2>
+      <p class="section-sub">Use quick filters or type in the search box above. Click “Add to Trip” to save spots to your itinerary.</p>
+
+      <div class="filters" id="filters">
+        <button class="pill" data-filter="type" data-value="Beach">Beach</button>
+        <button class="pill" data-filter="type" data-value="City">City</button>
+        <button class="pill" data-filter="type" data-value="Hike">Hike</button>
+        <button class="pill" data-filter="region" data-value="Asia">Asia</button>
+        <button class="pill" data-filter="region" data-value="Europe">Europe</button>
+        <button class="pill" data-filter="budget" data-value="₹">₹</button>
+        <button class="pill" data-filter="budget" data-value="₹₹">₹₹</button>
+        <button class="pill" data-filter="budget" data-value="₹₹₹">₹₹₹</button>
+        <button id="clearFilters" class="pill">Clear</button>
+      </div>
+
+      <div class="grid" id="cards">
+        <!-- Cards (template repeated) -->
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section id="map" class="container">
+      <h2 class="section-title">See It On The Map</h2>
+      <p class="section-sub">Pan and zoom to explore where your saved places are located.</p>
+      <div class="map-embed">
+        <!-- Simple OSM embed (no API key) -->
+        <iframe title="World map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-23.3%2C-38.1%2C152.3%2C63.1&amp;layer=mapnik" style="border:0"></iframe>
+      </div>
+    </section>
+
+    <!-- Tips (Accordion) -->
+    <section id="tips" class="container">
+      <h2 class="section-title">Smart Travel Tips</h2>
+      <p class="section-sub">A few high‑impact reminders before you hit the road.</p>
+      <div class="accordion" id="tipsAcc">
+        <div class="acc-item open">
+          <div class="acc-head"><strong>Pack by outfits, not items</strong><span>+</span></div>
+          <div class="acc-content"><div>
+            <div class="container-small">
+              Keep a neutral base palette so pieces mix well. Roll clothing to save space; pack a lightweight rain layer year‑round.
+            </div>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-head"><strong>Plan for offline</strong><span>+</span></div>
+          <div class="acc-content"><div>
+            Download offline maps, translation packs, and boarding passes. Keep hotel address & key phrases saved in your notes.
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-head"><strong>Respect local culture</strong><span>+</span></div>
+          <div class="acc-content"><div>
+            Learn a few greetings, read up on tipping, and dress norms. A little effort goes a long way.
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section id="newsletter" class="container">
+      <h2 class="section-title">Get destination drops</h2>
+      <p class="section-sub">Join 25,000+ travelers who get one concise email/month.</p>
+      <form id="subscribeForm" class="search" novalidate>
+        <input type="email" id="email" placeholder="Your email" required>
+        <button class="btn primary" type="submit">Subscribe</button>
+      </form>
+      <p class="muted" id="subscribeMsg" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container" style="display:grid; grid-template-columns:1fr auto; gap:18px; align-items:center">
+      <p class="muted">© <span id="year"></span> Wanderly. Built with ♥ using HTML, CSS & JS.</p>
+      <div class="row">
+        <a class="pill" href="#top">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Planner Drawer -->
+  <div class="drawer" id="planner">
+    <div class="drawer-panel" aria-label="Trip planner" id="plannerPanel">
+      <div class="row" style="justify-content:space-between; align-items:center">
+        <h3 style="margin:6px 0">Your Trip Plan</h3>
+        <button class="btn small" id="shareBtn" title="Copy shareable link">Share</button>
+      </div>
+      <div class="divider"></div>
+      <div class="itinerary" id="itinerary"></div>
+      <div class="divider"></div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn small" id="clearPlan">Clear Plan</button>
+        <span class="muted" id="planCount">0 items</span>
+      </div>
+    </div>
+    <button class="btn primary" id="plannerToggle" aria-expanded="false" aria-controls="plannerPanel">
+      Open Planner
+    </button>
+  </div>
+
+  <template id="cardTpl">
+    <article class="card" data-type="" data-region="" data-budget="" data-title="" data-id="">
+      <div class="thumb">
+        <img alt="" />
+        <span class="badge"></span>
+      </div>
+      <div class="card-body">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="title"></div>
+            <div class="meta"></div>
+          </div>
+          <div class="price"></div>
+        </div>
+        <div class="tags"></div>
+        <div class="btn-row">
+          <button class="btn small add">Add to Trip</button>
+          <button class="btn small ghost more">Details</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <template id="dayTpl">
+    <div class="day" data-day="">
+      <h4>Day <span class="n"></span></h4>
+      <div class="list"></div>
+    </div>
+  </template>
+
+  <script>
+    // ------- Data (could be replaced by API later) -------
+    const DESTINATIONS = [
+      {id:'bali', title:'Bali, Indonesia', type:'Beach', region:'Asia', budget:'₹₹', season:'Summer', days:5,
+        img:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop',
+        badge:'Great for couples', price:'Avg ₹9720/day', tags:['Surf','Temples','Villas']},
+      {id:'kyoto', title:'Kyoto, Japan', type:'City', region:'Asia', budget:'₹₹₹', season:'Spring', days:4,
+        img:'https://images.unsplash.com/photo-1480796927426-f609979314bd?q=80&w=1400&auto=format&fit=crop',
+        badge:'Cherry blossom peak', price:'Avg ₹14600/day', tags:['Shrines','Tea','Geisha']},
+      {id:'paris', title:'Paris, France', type:'City', region:'Europe', budget:'₹₹₹', season:'Autumn', days:3,
+        img:'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1400&auto=format&fit=crop',
+        badge:'Foodie favorite', price:'Avg ₹17900/day', tags:['Museums','Cafés','Fashion']},
+      {id:'amalfi', title:'Amalfi Coast, Italy', type:'Beach', region:'Europe', budget:'₹₹₹', season:'Summer', days:3,
+        img:'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1400&auto=format&fit=crop',
+        badge:'Iconic views', price:'Avg ₹21500/day', tags:['Seafood','Boats','Cliffs']},
+      {id:'banff', title:'Banff, Canada', type:'Hike', region:'North America', budget:'₹₹', season:'Summer', days:5,
+        img:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1400&auto=format&fit=crop',
+        badge:'Emerald lakes', price:'Avg ₹11340/day', tags:['Lakes','Wildlife','Trails']},
+      {id:'goa', title:'Goa, India', type:'Beach', region:'Asia', budget:'₹', season:'Winter', days:3,
+        img:'https://deih43ym53wif.cloudfront.net/cola-beach-goa-india-shutterstock_772145203_82b97bd9df.jpeg',
+        badge:'Sun & spice', price:'Avg ₹4860/day', tags:['Shacks','Parties','Churches']},
+      {id:'queenstown', title:'Queenstown, NZ', type:'Hike', region:'Oceania', budget:'₹₹₹', season:'Winter', days:4,
+        img:'https://images.unsplash.com/photo-1433477155337-9aea4e790195?q=80&w=1400&auto=format&fit=crop',
+        badge:'Adventure capital', price:'Avg ₹16200/day', tags:['Ski','Bungee','Luge']},
+      {id:'marrakesh', title:'Marrakesh, Morocco', type:'City', region:'Africa', budget:'₹₹', season:'Autumn', days:3,
+        img:'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1400&auto=format&fit=crop',
+        badge:'Markets & riads', price:'Avg ₹8950/day', tags:['Souks','Spice','Tiles']},
+    ];
+
+    // ------- Helpers -------
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const state = {filters:{}, query:'', plan: JSON.parse(localStorage.getItem('wanderly-plan')||'{}')};
+
+    function setTheme(t){
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('wanderly-theme', t);
+    }
+
+    // ------- Render Cards -------
+    function renderCards(list){
+      const wrap = $('#cards');
+      wrap.innerHTML = '';
+      const tpl = $('#cardTpl');
+      list.forEach(d => {
+        const n = tpl.content.cloneNode(true);
+        const card = n.querySelector('.card');
+        card.dataset.type = d.type; card.dataset.region = d.region; card.dataset.budget = d.budget; card.dataset.title = d.title.toLowerCase(); card.dataset.id = d.id;
+        n.querySelector('img').src = d.img; n.querySelector('img').alt = d.title;
+        n.querySelector('.badge').textContent = d.badge;
+        n.querySelector('.title').textContent = d.title;
+        n.querySelector('.meta').textContent = `${d.type} • ${d.region} • ${d.season} • ${d.days}d`;
+        n.querySelector('.price').textContent = d.price;
+        const tags = n.querySelector('.tags');
+        d.tags.forEach(t=>{ const s=document.createElement('span'); s.className='pill'; s.textContent=t; tags.appendChild(s); });
+        n.querySelector('.add').addEventListener('click', ()=> addToPlan(d));
+        n.querySelector('.more').addEventListener('click', ()=> openDetails(d));
+        wrap.appendChild(n);
+      })
+    }
+
+    // ------- Filters -------
+    function applyFilters(){
+      const q = state.query.trim().toLowerCase();
+      const {filters} = state;
+      const out = DESTINATIONS.filter(d=>{
+        const matchQ = !q || d.title.toLowerCase().includes(q) || d.tags.some(t=> t.toLowerCase().includes(q));
+        const matchType = !filters.type || d.type===filters.type;
+        const matchRegion = !filters.region || d.region===filters.region;
+        const matchBudget = !filters.budget || d.budget===filters.budget;
+        const matchSeason = !filters.season || d.season===filters.season;
+        return matchQ && matchType && matchRegion && matchBudget && matchSeason;
+      })
+      renderCards(out);
+    }
+
+    // ------- Details Modal (lightweight) -------
+    function openDetails(d){
+      const el = document.createElement('dialog');
+      el.style.border='1px solid rgba(255,255,255,.12)'; el.style.borderRadius='16px'; el.style.padding='0'; el.style.background='var(--card)'; el.style.color='var(--text)'; el.style.maxWidth='min(720px, 92vw)';
+      el.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr; gap:0">
+          <div class="thumb"><img src="${d.img}" alt="${d.title}"></div>
+          <div style="padding:16px">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:4px 0">${d.title}</h3>
+              <button class="btn small ghost" id="closeDlg">Close</button>
+            </div>
+            <p class="muted">${d.type} • ${d.region} • Best in ${d.season} • ${d.days} days · ${d.price}</p>
+            <p>Highlights: ${d.tags.join(', ')}. This is a sample description—swap with CMS copy or an API later.</p>
+            <div class="row" style="gap:8px">
+              <button class="btn" id="dlgAdd">Add to Trip</button>
+              <a class="btn ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/${encodeURIComponent(d.title)}">Open in Maps</a>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      el.showModal();
+      el.querySelector('#closeDlg').addEventListener('click', ()=>{ el.close(); el.remove(); })
+      el.querySelector('#dlgAdd').addEventListener('click', ()=> addToPlan(d))
+    }
+
+    // ------- Planner -------
+    function ensureDays(n=3){
+      const wrap = $('#itinerary');
+      if (!wrap.children.length){
+        for(let i=1;i<=n;i++) addDay(i);
+      }
+    }
+    function addDay(i){
+      const tpl = $('#dayTpl');
+      const n = tpl.content.cloneNode(true);
+      n.querySelector('.day').dataset.day = String(i);
+      n.querySelector('.n').textContent = String(i);
+      $('#itinerary').appendChild(n);
+    }
+    function addToPlan(d){
+      ensureDays();
+      const targetDay = document.querySelector('.day');
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.dataset.id = d.id;
+      item.innerHTML = `<span>${d.title}</span><span class="x" title="Remove" aria-label="Remove">✕</span>`;
+      targetDay.querySelector('.list').appendChild(item);
+      item.querySelector('.x').addEventListener('click', ()=>{ item.remove(); syncPlan(); });
+      syncPlan();
+    }
+    function syncPlan(){
+      const days = $$('#itinerary .day').map(day=>{
+        return {
+          day: day.dataset.day,
+          items: Array.from(day.querySelectorAll('.item')).map(i=> i.dataset.id)
+        }
+      })
+      state.plan = {days};
+      localStorage.setItem('wanderly-plan', JSON.stringify(state.plan));
+      const count = days.reduce((a,c)=> a + c.items.length, 0);
+      $('#planCount').textContent = `${count} item${count!==1?'s':''}`;
+    }
+    function restorePlan(){
+      const {plan} = state; if (!plan.days) return;
+      ensureDays(plan.days.length || 3);
+      plan.days.forEach((d, idx)=>{
+        let dayEl = $(`#itinerary .day:nth-child(${idx+1})`);
+        if(!dayEl){ addDay(idx+1); dayEl = $(`#itinerary .day:nth-child(${idx+1})`); }
+        d.items.forEach(id=>{
+          const dest = DESTINATIONS.find(x=> x.id===id); if(dest) addToPlan(dest);
+        })
+      })
+    }
+
+    // ------- Events -------
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme init
+      const savedTheme = localStorage.getItem('wanderly-theme');
+      if(savedTheme) setTheme(savedTheme);
+
+      renderCards(DESTINATIONS);
+      restorePlan();
+      $('#year').textContent = new Date().getFullYear();
+
+      // Search & filters
+      $('#q').addEventListener('input', (e)=>{ state.query = e.target.value; applyFilters(); })
+      $('#season').addEventListener('change', (e)=>{ state.filters.season = e.target.value || undefined; applyFilters(); })
+      $('#filters').addEventListener('click', (e)=>{
+        const b = e.target.closest('[data-filter]'); if(!b) return;
+        const k=b.dataset.filter, v=b.dataset.value;
+        // toggle
+        if (state.filters[k]===v){ delete state.filters[k]; b.classList.remove('active'); }
+        else{ state.filters[k]=v; $$('#filters .pill').filter(p=>p.dataset.filter===k).forEach(p=>p.classList.remove('active')); b.classList.add('active'); }
+        applyFilters();
+      })
+      $('#clearFilters').addEventListener('click', ()=>{ state.filters={}; state.query=''; $('#q').value=''; $('#season').value=''; $$('#filters .pill').forEach(p=>p.classList.remove('active')); applyFilters(); })
+
+      // Accordion
+      $$('#tipsAcc .acc-head').forEach(h=>{
+        h.addEventListener('click', ()=>{ h.parentElement.classList.toggle('open'); })
+      })
+
+      // Planner controls
+      const drawer = $('#planner');
+      const toggle = $('#plannerToggle');
+      const openPlanner = ()=>{ drawer.classList.add('open'); toggle.setAttribute('aria-expanded','true') }
+      const closePlanner = ()=>{ drawer.classList.remove('open'); toggle.setAttribute('aria-expanded','false') }
+      toggle.addEventListener('click', ()=>{ drawer.classList.toggle('open'); toggle.setAttribute('aria-expanded', drawer.classList.contains('open')) })
+      $('#openPlanner').addEventListener('click', (e)=>{ e.preventDefault(); openPlanner(); document.getElementById('plannerPanel').scrollTop = 0; })
+      $('#clearPlan').addEventListener('click', ()=>{ $('#itinerary').innerHTML=''; ensureDays(); syncPlan(); })
+
+      // Share link (encodes IDs)
+      $('#shareBtn').addEventListener('click', async ()=>{
+        syncPlan();
+        const ids = state.plan.days?.flatMap(d=> d.items) || [];
+        const url = new URL(location.href);
+        url.hash = '#plan=' + encodeURIComponent(ids.join(','));
+        try{ await navigator.clipboard.writeText(url.toString()); alert('Link copied to clipboard!'); }catch{ prompt('Copy your link:', url.toString()); }
+      })
+
+      // Import plan from URL hash
+      const hash = new URL(location.href).hash;
+      if(hash.startsWith('#plan=')){
+        const ids = decodeURIComponent(hash.split('=')[1]).split(',').filter(Boolean);
+        ids.forEach(id=>{ const d = DESTINATIONS.find(x=>x.id===id); if(d) addToPlan(d); })
+      }
+
+      // Theme toggle
+      $('#themeBtn').addEventListener('click', ()=>{
+        const cur = document.documentElement.getAttribute('data-theme')||'dark';
+        setTheme(cur==='dark'?'light':'dark');
+      })
+
+      // Basic mobile menu (scroll to sections)
+      $('#menuBtn').addEventListener('click', ()=>{
+        alert('Use the section links: Explore, Map, Tips, Subscribe');
+      })
+    })
+  </script>
+</body>
+</html>
