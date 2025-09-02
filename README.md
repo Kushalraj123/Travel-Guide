@@ -15,7 +15,3 @@ The Travel Guide website aims to provide travelers with a convenient online reso
 - **Frontend:** HTML, CSS, JavaScript
 - **Hosting:** Can be hosted on GitHub Pages, Netlify, or Vercel
 
-## How to Run Locally
-1. Clone the repository:  
-   ```bash
-   git clone https://github.com/yourusername/travel-guide.git
